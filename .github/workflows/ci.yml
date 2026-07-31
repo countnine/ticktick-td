@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# 같은 브랜치에 새로 push 하면 진행 중이던 실행은 취소한다.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: node ${{ matrix.node }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # 한 플랫폼이 깨져도 나머지 결과는 보이게 한다.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [20, 22, 24]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # 의존성이 없으므로 install 은 사실상 no-op 이지만, package.json 이 깨지면 여기서 걸린다.
+      - run: npm install --no-audit --no-fund
+
+      - name: 구문 검사
+        run: node --check bin/td.mjs && node --check scripts/probe.mjs
+        shell: bash
+
+      - name: src 구문 검사
+        run: for f in src/*.mjs; do node --check "$f"; done
+        shell: bash
+
+      - run: npm test
+
+      # 배포본에 무엇이 들어가는지 릴리스 때가 아니라 여기서 확인한다.
+      - run: npm pack --dry-run

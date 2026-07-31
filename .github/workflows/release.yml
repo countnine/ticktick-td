@@ -1,0 +1,39 @@
+name: Release
+
+# v1.2.3 형태의 태그를 밀면 npm 에 발행한다.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write # npm provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - run: npm install --no-audit --no-fund
+
+      - run: npm test
+
+      # 태그(v1.2.3)와 package.json 의 version 이 어긋난 채 발행되는 사고를 막는다.
+      - name: 태그와 버전 일치 확인
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "태그 $tag 와 package.json 의 $pkg 가 다릅니다" >&2
+            exit 1
+          fi
+
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

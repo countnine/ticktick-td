@@ -1,0 +1,47 @@
+{
+  "name": "ticktick-td",
+  "version": "0.1.0",
+  "description": "터미널에서 TickTick 오늘 할일을 보고, 열고, 완료하고, 추가하는 CLI (Windows · macOS · Linux)",
+  "type": "module",
+  "bin": {
+    "td": "./bin/td.mjs",
+    "ticktick-td": "./bin/td.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "probe": "node scripts/probe.mjs"
+  },
+  "keywords": [
+    "ticktick",
+    "dida365",
+    "todo",
+    "task",
+    "tasks",
+    "cli",
+    "terminal",
+    "productivity",
+    "gtd"
+  ],
+  "author": "Jay <amator@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/countnine/ticktick-td.git"
+  },
+  "homepage": "https://github.com/countnine/ticktick-td#readme",
+  "bugs": {
+    "url": "https://github.com/countnine/ticktick-td/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

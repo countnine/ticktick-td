@@ -1,0 +1,11 @@
+node_modules/
+*.log
+
+# 토큰 / 개인 데이터가 섞일 수 있는 산출물
+tt-probe.json
+probe-*.json
+*.token
+.env
+
+# npm pack 산출물
+*.tgz
