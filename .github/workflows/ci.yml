@@ -44,5 +44,14 @@ jobs:
 
       - run: npm test
 
-      # 배포본에 무엇이 들어가는지 릴리스 때가 아니라 여기서 확인한다.
-      - run: npm pack --dry-run
+      # 배포본에 무엇이 들어가는지, 그리고 발행 시 npm 이 package.json 을 고쳐 쓰지는 않는지 확인한다.
+      # (bin 값에 "./" 를 붙이면 발행 단계에서 bin 항목이 통째로 제거돼 명령어가 생기지 않는다.)
+      - name: 배포 매니페스트 검사
+        run: |
+          output=$(npm publish --dry-run 2>&1)
+          echo "$output"
+          if echo "$output" | grep -q "was invalid and removed"; then
+            echo "::error::발행 시 package.json 이 자동 수정됩니다. 위 경고를 해결하세요."
+            exit 1
+          fi
+        shell: bash
