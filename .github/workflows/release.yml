@@ -20,6 +20,10 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
 
+      # Trusted Publisher(OIDC)는 npm 11.5.1 이상을 요구한다. 러너에 딸려오는 버전이
+      # 그보다 낮을 수 있어 명시적으로 올린다.
+      - run: npm install -g npm@latest
+
       - run: npm install --no-audit --no-fund
 
       - run: npm test
@@ -34,6 +38,6 @@ jobs:
             exit 1
           fi
 
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # npm 의 Trusted Publisher(OIDC) 로 인증한다. id-token: write 만 있으면 되고
+      # NPM_TOKEN 같은 시크릿은 필요 없다. provenance 도 자동으로 붙는다.
+      - run: npm publish --access public
