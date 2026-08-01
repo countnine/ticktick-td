@@ -1,6 +1,6 @@
 {
   "name": "ticktick-td",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "터미널에서 TickTick 오늘 할일을 보고, 열고, 완료하고, 추가하는 CLI (Windows · macOS · Linux)",
   "type": "module",
   "bin": {
