@@ -1,6 +1,6 @@
 {
   "name": "ticktick-td",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "터미널에서 TickTick 할일을 보고, 열고, 완료하고, 추가하고, 편집하고, 지우는 CLI (Windows · macOS · Linux)",
   "type": "module",
   "bin": {
