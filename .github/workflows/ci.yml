@@ -46,9 +46,12 @@ jobs:
 
       # 배포본에 무엇이 들어가는지, 그리고 발행 시 npm 이 package.json 을 고쳐 쓰지는 않는지 확인한다.
       # (bin 값에 "./" 를 붙이면 발행 단계에서 bin 항목이 통째로 제거돼 명령어가 생기지 않는다.)
+      # 이미 발행된 버전이면 npm 이 EPUBLISHCONFLICT 로 끝난다(= 릴리스 후 main 에 푸시할 때마다).
+      # 그건 여기서 볼 문제가 아니므로 `|| true` 로 넘긴다. 자동 수정 경고는 그 오류보다 먼저 찍히므로
+      # 아래 grep 은 그대로 유효하다.
       - name: 배포 매니페스트 검사
         run: |
-          output=$(npm publish --dry-run 2>&1)
+          output=$(npm publish --dry-run 2>&1 || true)
           echo "$output"
           if echo "$output" | grep -q "was invalid and removed"; then
             echo "::error::발행 시 package.json 이 자동 수정됩니다. 위 경고를 해결하세요."
