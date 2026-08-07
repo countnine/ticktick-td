@@ -7,7 +7,9 @@ import { describe, it } from 'node:test';
 process.env.TD_CONFIG_DIR = await mkdtemp(join(tmpdir(), 'td-store-'));
 
 const {
+  dropLastListEntries,
   invalidateTaskCache,
+  patchLastListEntry,
   readConfig,
   readLastList,
   readTaskCache,
@@ -43,6 +45,43 @@ describe('번호 캐시', () => {
     await saveLastList([], 'today');
     const mode = (await stat(LAST_LIST_PATH)).mode & 0o777;
     assert.equal(mode, 0o600);
+  });
+});
+
+describe('번호 캐시 갱신', () => {
+  const entries = () => [
+    { number: 1, id: 't1', projectId: 'p1', title: '첫째' },
+    { number: 2, id: 't2', projectId: 'p1', title: '둘째' },
+  ];
+
+  it('제목을 갱신하면 같은 번호로 이어서 편집할 수 있다', async () => {
+    await saveLastList(entries(), 'today');
+    await patchLastListEntry('t1', { title: '바뀐 제목' });
+
+    const loaded = await readLastList();
+    assert.equal(loaded.entries[0].title, '바뀐 제목');
+    assert.equal(loaded.entries[1].title, '둘째', '다른 항목은 그대로여야 한다');
+  });
+
+  it('없는 id 를 갱신해도 조용히 넘어간다', async () => {
+    await saveLastList(entries(), 'today');
+    await patchLastListEntry('없는id', { title: 'x' });
+    assert.deepEqual(await readLastList().then((c) => c.entries), entries());
+  });
+
+  it('지운 항목을 빼되 남은 번호는 그대로 둔다', async () => {
+    await saveLastList(entries(), 'today');
+    await dropLastListEntries(['t1']);
+
+    const { entries: left } = await readLastList();
+    assert.deepEqual(left, [{ number: 2, id: 't2', projectId: 'p1', title: '둘째' }]);
+  });
+
+  it('목록이 없어도 오류가 없다', async () => {
+    await saveLastList([], 'today');
+    await dropLastListEntries(['t1']);
+    await patchLastListEntry('t1', { title: 'x' });
+    assert.deepEqual((await readLastList()).entries, []);
   });
 });
 

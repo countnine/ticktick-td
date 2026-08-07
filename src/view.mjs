@@ -188,6 +188,44 @@ export function sortForToday(tasks) {
   });
 }
 
+/**
+ * 지난(지연) 항목: 오늘에 가까운 날짜 먼저 → 같은 날짜 안에서 우선순위 높은 순 → 등록 오래된 순.
+ * 마감일 키는 YYYY-MM-DD 라 문자열 내림차순이 그대로 "오늘에 가까운 순" 이 된다.
+ */
+export function sortForOverdue(tasks) {
+  return [...tasks].sort((a, b) => {
+    const keyA = parseDue(a)?.key ?? '';
+    const keyB = parseDue(b)?.key ?? '';
+    if (keyA !== keyB) return keyA < keyB ? 1 : -1;
+    const priorityDiff = (b.priority ?? 0) - (a.priority ?? 0);
+    if (priorityDiff !== 0) return priorityDiff;
+    return (createdAt(a)?.getTime() ?? 0) - (createdAt(b)?.getTime() ?? 0);
+  });
+}
+
+/** `td` 기본 화면이 지난 항목으로 채우는 기본 줄 수 */
+export const DEFAULT_TODAY_FILL = 10;
+
+/**
+ * `td` 기본 화면 구성. 오늘 마감이 적으면 남는 자리를 지난 항목으로 채운다.
+ * API 없이 규칙만 테스트할 수 있도록 순수 함수로 둔다.
+ *
+ * @returns {{sections: {label?: string, tasks: object[]}[], overdueCount: number}}
+ */
+export function buildTodayView(tasks, { today = todayKey(), fill = DEFAULT_TODAY_FILL } = {}) {
+  const dueToday = sortForToday(tasks.filter((task) => isDueToday(task, today)));
+  const overdue = tasks.filter((task) => isOverdue(task, today));
+
+  const shortfall = Math.max(0, fill - dueToday.length);
+  const filler = shortfall > 0 ? sortForOverdue(overdue).slice(0, shortfall) : [];
+
+  const sections = [{ tasks: dueToday }];
+  if (filler.length > 0) {
+    sections.push({ label: `지난 항목 (${overdue.length}건 중 ${filler.length}건)`, tasks: filler });
+  }
+  return { sections, overdueCount: overdue.length };
+}
+
 /** 보조 뷰: 우선순위 내림차순 → 등록일 오래된 순 */
 export function sortForBacklog(tasks) {
   return [...tasks].sort((a, b) => {
