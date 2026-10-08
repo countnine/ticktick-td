@@ -24,12 +24,14 @@ export function resolveDue(value) {
   const [datePart, timePart, ...rest] = String(value ?? '').trim().split(/\s+/);
   if (rest.length > 0) throw new Error(`--due 값이 너무 깁니다: ${value}`);
 
+  // 키워드는 대소문자를 가리지 않는다 (`--p` 의 parsePriority 와 같은 규칙).
+  const keyword = datePart?.toLowerCase();
   const key =
-    datePart === 'today'
+    keyword === 'today'
       ? todayKey()
-      : datePart === 'tomorrow'
+      : keyword === 'tomorrow'
         ? relativeDayKey(1)
-        : /^\d{4}-\d{2}-\d{2}$/.test(datePart)
+        : /^\d{4}-\d{2}-\d{2}$/.test(datePart ?? '')
           ? datePart
           : undefined;
 

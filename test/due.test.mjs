@@ -41,6 +41,12 @@ describe('resolveDue', () => {
     assert.throws(() => resolveDue('today 18:00 추가'), /너무 깁니다/);
     assert.throws(() => resolveDue(undefined), /today \| tomorrow/);
   });
+
+  it('today / tomorrow 는 대소문자를 가리지 않는다', () => {
+    assert.equal(resolveDue('Today').key, todayKey());
+    assert.equal(resolveDue('TOMORROW').key, resolveDue('tomorrow').key);
+    assert.equal(resolveDue('Today 9:05').time, '09:05');
+  });
 });
 
 describe('toApiDate', () => {

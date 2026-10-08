@@ -4,8 +4,28 @@ import { readConfig, readTaskCache, saveTaskCache, updateConfig } from './store.
 
 const MAX_INBOX_PAGES = 20;
 
-/** 캐시 유효 시간. TD_CACHE_TTL_SEC 로 조절한다 (0 이면 캐시 사용 안 함). */
-const CACHE_TTL_MS = (Number.parseInt(process.env.TD_CACHE_TTL_SEC ?? '', 10) || 300) * 1000;
+/**
+ * 캐시 유효 시간(ms). TD_CACHE_TTL_SEC 로 조절한다 (0 이면 캐시 사용 안 함).
+ * 이전에는 `parseInt(...) || 300` 패턴이라 '0' 이 300초로 둔갑했다.
+ */
+export function resolveCacheTtlMs(env = process.env) {
+  const raw = env.TD_CACHE_TTL_SEC;
+  if (raw === undefined) return 300_000;
+  const text = String(raw).trim();
+  if (text === '') return 300_000;
+  // parseInt 는 '60abc' → 60, '1.5' → 1, '1e3' → 1 처럼 관대하게 읽어서
+  // 오타가 조용히 다른 TTL 로 둔갑한다. 전체가 십진 정수로만 이뤄져야 한다.
+  if (!/^\d+$/.test(text)) {
+    throw new Error(`TD_CACHE_TTL_SEC 값은 0 이상의 정수여야 합니다: ${raw}`);
+  }
+  const ms = Number(text) * 1000;
+  if (!Number.isSafeInteger(ms)) {
+    throw new Error(`TD_CACHE_TTL_SEC 값이 너무 큽니다: ${raw}`);
+  }
+  return ms;
+}
+
+const CACHE_TTL_MS = resolveCacheTtlMs();
 
 /**
  * 인박스는 projectIds 를 생략한 filter 로만 온전히 받을 수 있고 200건에서 잘리므로,

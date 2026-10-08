@@ -164,12 +164,12 @@ export async function filterTasks(body) {
 
 /** GET /project/{projectId}/task/{taskId} — 단건 상세 */
 export async function getTask(projectId, taskId) {
-  return request(`/project/${projectId}/task/${taskId}`);
+  return request(`/project/${encodeSegment(projectId)}/task/${encodeSegment(taskId)}`);
 }
 
 /** GET /project/{id}/data — 해당 프로젝트의 미완료 태스크 */
 export async function getProjectData(projectId) {
-  return request(`/project/${projectId}/data`);
+  return request(`/project/${encodeSegment(projectId)}/data`);
 }
 
 export async function listProjects() {
@@ -178,7 +178,7 @@ export async function listProjects() {
 }
 
 export async function completeTask(projectId, taskId) {
-  await request(`/project/${projectId}/task/${taskId}/complete`, { method: 'POST' });
+  await request(`/project/${encodeSegment(projectId)}/task/${encodeSegment(taskId)}/complete`, { method: 'POST' });
 }
 
 export async function createTask(input) {
@@ -191,10 +191,15 @@ export async function createTask(input) {
  * (병합 규칙은 src/edit.mjs 의 mergeTaskUpdate 참고)
  */
 export async function updateTask(taskId, body) {
-  return request(`/task/${taskId}`, { method: 'POST', body });
+  return request(`/task/${encodeSegment(taskId)}`, { method: 'POST', body });
 }
 
 /** DELETE /project/{projectId}/task/{taskId} — 휴지통으로 보낸다 (앱에서 복구 가능) */
 export async function deleteTask(projectId, taskId) {
-  await request(`/project/${projectId}/task/${taskId}`, { method: 'DELETE' });
+  await request(`/project/${encodeSegment(projectId)}/task/${encodeSegment(taskId)}`, { method: 'DELETE' });
+}
+
+/** URL 경로에 들어가는 값은 인코딩한다. 할일 id·projectId 는 캐시 파일에서 오지만 그대로 믿지 않는다. */
+function encodeSegment(value) {
+  return encodeURIComponent(String(value ?? ''));
 }

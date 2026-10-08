@@ -1,4 +1,5 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { CAN_CHECK_MODE } from './auth.mjs';
 import { LAST_LIST_PATH, TASK_CACHE_PATH, TD_CONFIG_PATH, TD_DIR } from './paths.mjs';
 
 async function readJson(path) {
@@ -10,9 +11,15 @@ async function readJson(path) {
 }
 
 async function writeJson(path, value) {
-  await mkdir(TD_DIR, { recursive: true });
+  await mkdir(TD_DIR, { recursive: true, mode: 0o700 });
   // 태스크 제목이 담기므로 홈 디렉터리 아래(프로젝트 밖)에만 쓴다.
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600 });
+  // writeFile 의 mode 옵션은 새로 만드는 파일에만 적용된다.
+  // 예전에 느슨하게 만들어진 파일·디렉터리도 여기서 조인다 (POSIX 전용).
+  if (CAN_CHECK_MODE) {
+    await chmod(TD_DIR, 0o700).catch(() => {});
+    await chmod(path, 0o600).catch(() => {});
+  }
 }
 
 export async function readConfig() {

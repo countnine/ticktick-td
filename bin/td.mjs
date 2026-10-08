@@ -451,9 +451,25 @@ async function commandView(args) {
 
 /** 기본 브라우저로 URL 을 연다. 의존성 없이 플랫폼별 명령을 쓴다. */
 function openInBrowser(url) {
+  // http(s) 만 연다. 할일 제목·본문에서 뽑은 URL 이라도 다른 스킴(file:·javascript: 등)은 막는다.
+  let protocol;
+  try {
+    protocol = new URL(url).protocol;
+  } catch {
+    protocol = '';
+  }
+  if (protocol !== 'http:' && protocol !== 'https:') {
+    console.error(color.red(`브라우저로 열 수 없는 주소입니다: ${url}`));
+    process.exitCode = 1;
+    return;
+  }
+
+  // Windows 의 `cmd /c start` 는 명령줄을 다시 해석하므로 URL 속 `&`·`|` 등이 명령으로 실행될 수 있다.
+  // 할일 제목에 들어간 URL 은 공유 목록을 통해 남이 넣을 수도 있어서, 셸 해석을 거치지 않는
+  // rundll32 url.dll,FileProtocolHandler 로 연다.
   const [command, args] =
     process.platform === 'win32'
-      ? ['cmd', ['/c', 'start', '', url]]
+      ? ['rundll32', ['url.dll,FileProtocolHandler', url]]
       : process.platform === 'darwin'
         ? ['open', [url]]
         : ['xdg-open', [url]];
@@ -606,7 +622,7 @@ async function commandAdd(args) {
   // 마감일을 생략하면 오늘로 잡는다.
   // 인박스의 기한 없는 태스크는 Open API 가 돌려주지 않아 td 목록에서 영영 보이지 않기 때문이다.
   const dueInput = options.due ?? 'today';
-  const due = dueInput === 'none' ? undefined : resolveDue(dueInput);
+  const due = dueInput.toLowerCase() === 'none' ? undefined : resolveDue(dueInput);
   if (due) {
     body.dueDate = toApiDate(due.key, due.time);
     body.isAllDay = due.allDay;
