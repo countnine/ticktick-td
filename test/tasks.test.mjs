@@ -87,6 +87,23 @@ describe('resolveCacheTtlMs', () => {
     assert.throws(() => resolveCacheTtlMs({ TD_CACHE_TTL_SEC: 'abc' }), /TD_CACHE_TTL_SEC/);
     assert.throws(() => resolveCacheTtlMs({ TD_CACHE_TTL_SEC: '-1' }), /TD_CACHE_TTL_SEC/);
   });
+
+  it('관대한 parseInt 입력은 거부한다 (60abc·1.5·1e3)', () => {
+    // 예전 parseInt 방식이면 각각 60000·1000·1000 으로 조용히 둔갑했다.
+    for (const v of ['60abc', '1.5', '1e3', '0x10']) {
+      assert.throws(() => resolveCacheTtlMs({ TD_CACHE_TTL_SEC: v }), /TD_CACHE_TTL_SEC/, v);
+    }
+  });
+
+  it('앞뒤 공백은 허용하고, 공백만 있으면 기본값', () => {
+    assert.equal(resolveCacheTtlMs({ TD_CACHE_TTL_SEC: ' 60 ' }), 60_000);
+    assert.equal(resolveCacheTtlMs({ TD_CACHE_TTL_SEC: '007' }), 7_000);
+    assert.equal(resolveCacheTtlMs({ TD_CACHE_TTL_SEC: '   ' }), 300_000);
+  });
+
+  it('안전 정수 범위를 넘는 값은 거부한다', () => {
+    assert.throws(() => resolveCacheTtlMs({ TD_CACHE_TTL_SEC: '99999999999999999999' }), /TD_CACHE_TTL_SEC/);
+  });
 });
 
 describe('collectOpenTasks', () => {

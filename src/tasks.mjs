@@ -10,12 +10,19 @@ const MAX_INBOX_PAGES = 20;
  */
 export function resolveCacheTtlMs(env = process.env) {
   const raw = env.TD_CACHE_TTL_SEC;
-  if (raw === undefined || raw === '') return 300_000;
-  const seconds = Number.parseInt(raw, 10);
-  if (!Number.isInteger(seconds) || seconds < 0) {
+  if (raw === undefined) return 300_000;
+  const text = String(raw).trim();
+  if (text === '') return 300_000;
+  // parseInt 는 '60abc' → 60, '1.5' → 1, '1e3' → 1 처럼 관대하게 읽어서
+  // 오타가 조용히 다른 TTL 로 둔갑한다. 전체가 십진 정수로만 이뤄져야 한다.
+  if (!/^\d+$/.test(text)) {
     throw new Error(`TD_CACHE_TTL_SEC 값은 0 이상의 정수여야 합니다: ${raw}`);
   }
-  return seconds * 1000;
+  const ms = Number(text) * 1000;
+  if (!Number.isSafeInteger(ms)) {
+    throw new Error(`TD_CACHE_TTL_SEC 값이 너무 큽니다: ${raw}`);
+  }
+  return ms;
 }
 
 const CACHE_TTL_MS = resolveCacheTtlMs();
