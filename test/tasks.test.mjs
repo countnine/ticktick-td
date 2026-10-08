@@ -8,7 +8,7 @@ process.env.TD_CONFIG_DIR = await mkdtemp(join(tmpdir(), 'td-tasks-'));
 process.env.TICKTICK_TOKEN = 'test-token';
 process.env.TD_CACHE_TTL_SEC = '0'; // 캐시를 끄고 순수 수집 로직만 본다
 
-const { collectOpenTasks } = await import('../src/tasks.mjs');
+const { collectOpenTasks, resolveCacheTtlMs } = await import('../src/tasks.mjs');
 const { TD_DIR } = await import('../src/paths.mjs');
 
 const realFetch = globalThis.fetch;
@@ -67,6 +67,26 @@ beforeEach(async () => {
 
 afterEach(() => {
   globalThis.fetch = realFetch;
+});
+
+describe('resolveCacheTtlMs', () => {
+  it('없으면 300초 기본값', () => {
+    assert.equal(resolveCacheTtlMs({}), 300_000);
+    assert.equal(resolveCacheTtlMs({ TD_CACHE_TTL_SEC: '' }), 300_000);
+  });
+
+  it('0이면 캐시를 끈다 (이전에는 0이 300초로 둔갑했다)', () => {
+    assert.equal(resolveCacheTtlMs({ TD_CACHE_TTL_SEC: '0' }), 0);
+  });
+
+  it('양의 정수는 초 단위로 바꾼다', () => {
+    assert.equal(resolveCacheTtlMs({ TD_CACHE_TTL_SEC: '60' }), 60_000);
+  });
+
+  it('잘못된 값은 사람이 읽는 오류', () => {
+    assert.throws(() => resolveCacheTtlMs({ TD_CACHE_TTL_SEC: 'abc' }), /TD_CACHE_TTL_SEC/);
+    assert.throws(() => resolveCacheTtlMs({ TD_CACHE_TTL_SEC: '-1' }), /TD_CACHE_TTL_SEC/);
+  });
 });
 
 describe('collectOpenTasks', () => {

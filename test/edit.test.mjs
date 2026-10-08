@@ -45,6 +45,12 @@ describe('parsePriority', () => {
     assert.throws(() => parsePriority('아무거나'), /high \| med \| low \| none/);
     assert.throws(() => parsePriority('4'), /high \| med \| low \| none/);
   });
+
+  it('숫자 뒤에 문자가 붙으면 거부한다 (parseInt 의 관대함을 막는다)', () => {
+    assert.throws(() => parsePriority('5abc'), /high \| med \| low \| none/);
+    assert.throws(() => parsePriority('3 ' + 'x'), /high \| med \| low \| none/);
+    assert.equal(parsePriority(' 5 '), 5, '앞뒤 공백은 허용');
+  });
 });
 
 describe('taskToDraft', () => {

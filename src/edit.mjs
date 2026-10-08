@@ -10,12 +10,15 @@ const PRIORITY_TO_NAME = { 5: 'high', 3: 'med', 1: 'low', 0: 'none' };
 
 /** `--p` 값 → API priority 숫자 */
 export function parsePriority(value) {
-  const named = PRIORITY_BY_NAME[String(value).trim().toLowerCase()];
-  const priority = named ?? Number.parseInt(value, 10);
-  if (![0, 1, 3, 5].includes(priority)) {
-    throw new Error(`우선순위는 high | med | low | none (또는 5 | 3 | 1 | 0) 이어야 합니다: ${value}`);
+  const text = String(value).trim();
+  const named = PRIORITY_BY_NAME[text.toLowerCase()];
+  if (named !== undefined) return named;
+  // Number.parseInt('5abc') 가 5 로 통과하는 일을 막기 위해 순수 숫자만 받는다.
+  if (/^\d+$/.test(text)) {
+    const priority = Number(text);
+    if ([0, 1, 3, 5].includes(priority)) return priority;
   }
-  return priority;
+  throw new Error(`우선순위는 high | med | low | none (또는 5 | 3 | 1 | 0) 이어야 합니다: ${value}`);
 }
 
 /**
