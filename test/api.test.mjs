@@ -175,6 +175,12 @@ describe('요청 형태', () => {
     assert.equal(calls[0].init.method, 'POST');
   });
 
+  it('경로에 들어가는 id 는 인코딩한다', async () => {
+    const calls = stubFetch(() => new Response(null, { status: 204 }));
+    await completeTask('p 1', 't/1');
+    assert.equal(calls[0].url, 'https://api.ticktick.com/open/v1/project/p%201/task/t%2F1/complete');
+  });
+
   it('JSON 이 아닌 응답은 undefined 로 돌려준다', async () => {
     stubFetch(() => new Response('ok', { status: 200, headers: { 'content-type': 'text/plain' } }));
     assert.equal(await completeTask('p1', 't1'), undefined);

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, stat } from 'node:fs/promises';
+import { chmod, mkdtemp, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
@@ -45,6 +45,23 @@ describe('번호 캐시', () => {
     await saveLastList([], 'today');
     const mode = (await stat(LAST_LIST_PATH)).mode & 0o777;
     assert.equal(mode, 0o600);
+  });
+
+  it('예전에 느슨하게 만들어진 파일도 저장 시 0600 으로 조인다', { skip: process.platform === 'win32' }, async () => {
+    const { rm } = await import('node:fs/promises');
+    await rm(LAST_LIST_PATH, { force: true });
+    await writeFile(LAST_LIST_PATH, '{}\n', { mode: 0o644 });
+    const lax = (await stat(LAST_LIST_PATH)).mode & 0o777;
+    assert.ok(lax & 0o077, `다른 사용자가 읽을 수 있는 권한이어야 한다 (현재 ${lax.toString(8)})`);
+
+    await saveLastList([], 'today');
+    assert.equal((await stat(LAST_LIST_PATH)).mode & 0o777, 0o600);
+  });
+
+  it('설정 디렉터리도 0700 으로 조인다', { skip: process.platform === 'win32' }, async () => {
+    await chmod(TD_DIR, 0o755);
+    await saveLastList([], 'today');
+    assert.equal((await stat(TD_DIR)).mode & 0o777, 0o700);
   });
 });
 
